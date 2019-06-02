@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Strategy } from 'passport-http-bearer'
 import { Repository } from 'typeorm'
-import { User } from './user.entity'
+import { User } from '@/data/entity/user.entity'
 
 @Injectable()
 export class BearerStrategy extends PassportStrategy(Strategy) {

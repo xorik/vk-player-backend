@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
 import { BearerStrategy } from './bearer.strategy'
-import { User } from './user.entity'
-import { AuthController } from '@/auth/auth.controller'
+import { AuthController } from './auth.controller'
+import { DataModule } from '@/data/data.module'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
   providers: [BearerStrategy],
+  imports: [DataModule],
   controllers: [AuthController],
 })
 export class AuthModule {}
