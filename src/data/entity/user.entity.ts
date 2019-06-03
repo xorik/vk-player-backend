@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { UserSource } from './user-source.entity'
 
 @Entity()
 export class User {
@@ -10,4 +11,10 @@ export class User {
 
   @Column()
   public token!: string
+
+  @OneToMany((type: any) => UserSource, (s: UserSource) => s.user, {
+    cascade: true,
+    eager: true,
+  })
+  public vkSources!: UserSource[]
 }
