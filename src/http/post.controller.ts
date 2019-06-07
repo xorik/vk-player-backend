@@ -1,6 +1,8 @@
 import { Controller, Get, NotFoundException, Param } from '@nestjs/common'
-import { Audio, AudioExtractor } from './transformer/audio-extractor.service'
+import proxyTransformer from './transformer/proxyTransformer'
 import { VkPostApi } from '@/vk-api/service/vk-post-api.service'
+import { AudioExtractor } from '@/data/service/audio-extractor.service'
+import { Audio } from '@/data/entity/audio.entity'
 
 @Controller('post')
 export class PostController {
@@ -32,11 +34,21 @@ export class PostController {
     const extracted = this.audioExtractor.extract(recent.items)
 
     if (extracted.length >= 30) {
-      return extracted
+      return this.convertUrls(extracted)
     }
 
     recent = await this.postApi.getRecentById(ownerId, 50, 100)
 
-    return extracted.concat(this.audioExtractor.extract(recent.items))
+    return this.convertUrls(
+      extracted.concat(this.audioExtractor.extract(recent.items)),
+    )
+  }
+
+  protected convertUrls(audio: Audio[]): Audio[] {
+    for (const track of audio) {
+      track.url = proxyTransformer(track.url)
+    }
+
+    return audio
   }
 }

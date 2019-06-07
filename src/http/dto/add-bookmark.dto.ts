@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty } from 'class-validator'
+import { IsInt, IsNotEmpty, Max, Min } from 'class-validator'
 
 export class AddBookmarkDto {
   @IsInt()
@@ -7,4 +7,8 @@ export class AddBookmarkDto {
   public readonly name!: string
   @IsNotEmpty()
   public readonly group!: string
+  @IsInt()
+  @Min(1)
+  @Max(10000)
+  public readonly numPosts!: number
 }

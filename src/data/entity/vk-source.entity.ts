@@ -7,4 +7,10 @@ export class VkSource {
 
   @Column()
   public name!: string
+
+  @Column()
+  public isCompleted: boolean = false
+
+  @Column()
+  public parsedPosts: number = 0
 }
