@@ -9,10 +9,7 @@ import {
   Group,
   GroupTransformer,
 } from './transformer/group-transformer.service'
-import {
-  GroupDetailResult,
-  VkGroupApi,
-} from '@/vk-api/service/vk-group-api.service'
+import { VkGroupApi } from '@/vk-api/service/vk-group-api.service'
 
 @Controller('group')
 export class GroupController {
@@ -39,20 +36,18 @@ export class GroupController {
     const groupData = await this.groupApi.details(groupIds)
 
     // Add members count and description from the second request
-    groupData.forEach(
-      (detail: GroupDetailResult): void => {
-        const found = groups.find(
-          (group: Group): boolean => group.id === detail.id,
-        )
+    for (const detail of groupData) {
+      const found = groups.find(
+        (group: Group): boolean => group.id === detail.id,
+      )
 
-        if (found === undefined) {
-          throw new Error(`Vk didn't return info for a group ${detail.id}`)
-        }
+      if (found === undefined) {
+        throw new Error(`Vk didn't return info for a group ${detail.id}`)
+      }
 
-        found.count = detail.members_count
-        found.description = detail.description
-      },
-    )
+      found.count = detail.members_count
+      found.description = detail.description
+    }
 
     return groups
   }
