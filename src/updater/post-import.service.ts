@@ -4,6 +4,8 @@ import { Repository } from 'typeorm'
 import { VkPostApi } from '@/vk-api/service/vk-post-api.service'
 import { AudioExtractor } from '@/data/service/audio-extractor.service'
 import { Audio } from '@/data/entity/audio.entity'
+import { Post } from '@/data/entity/post.entity'
+import { VkSource } from '@/data/entity/vk-source.entity'
 
 @Injectable()
 export class PostImportService {
@@ -12,23 +14,35 @@ export class PostImportService {
     private readonly audioExtractor: AudioExtractor,
     @InjectRepository(Audio)
     private readonly audioRepository: Repository<Audio>,
+    @InjectRepository(Post)
+    private readonly postRepository: Repository<Post>,
   ) {}
 
   public async import(
-    sourceId: number,
+    source: VkSource,
     offset: number,
     count: number,
   ): Promise<number> {
-    const posts = await this.postApi.getRecentById(sourceId, offset, count)
-    const audio = this.audioExtractor.extract(posts.items)
+    const posts = await this.postApi.getRecentById(source.id, offset, count)
 
-    // TODO: check for duplicates
-    // Save audio
-    for (const track of audio) {
-      await this.audioRepository.save(track)
+    for (const postObject of posts.items) {
+      const audio = this.audioExtractor.extract([postObject])
+      // No audio in the post
+      if (audio.length === 0) {
+        continue
+      }
+
+      // Save audio
+      await this.audioRepository.save(audio)
+
+      // Save post
+      const postEntity = new Post(postObject, source)
+      postEntity.audio = audio
+      await this.postRepository.save(postEntity)
     }
 
-    // TODO: check the next_from field and return boolean
+    // TODO: check the next_from field and return exception?
+    // TODO: count number of new posts
     return posts.items.length
   }
 }

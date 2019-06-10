@@ -9,6 +9,7 @@ import { CronLogger } from '@/logger/cron-logger.service'
 
 const API_DELAY = 1000
 const POST_COUNT = 100
+const REQUESTS_PER_CYCLE = 100
 
 @Injectable()
 export class Updater {
@@ -27,7 +28,9 @@ export class Updater {
   }
 
   public async update(): Promise<void> {
-    const requests = await this.requestRepository.find({ take: 100 })
+    const requests = await this.requestRepository.find({
+      take: REQUESTS_PER_CYCLE,
+    })
     if (requests.length === 0) {
       return
     }
@@ -64,7 +67,7 @@ export class Updater {
 
       // Get posts
       const importedCount = await this.postImportService.import(
-        request.sourceId,
+        source,
         offset,
         POST_COUNT,
       )
