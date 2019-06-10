@@ -66,22 +66,24 @@ export class Updater {
       }
 
       // Get posts
-      const importedCount = await this.postImportService.import(
+      const stat = await this.postImportService.import(
         source,
         offset,
         POST_COUNT,
       )
-      this.logger.debug(
-        `Imported ${importedCount} posts from ${source.name} (${source.id})`,
-      )
 
-      // Update source info
-      source.parsedPosts += importedCount
-      if (importedCount < POST_COUNT || importedCount === 0) {
+      if (stat.isCompleted) {
         source.isCompleted = true
-        this.logger.debug(`Assume that we imported all posts from the source`)
+        this.logger.debug(`All posts from the source are imported`)
+      } else {
+        this.logger.debug(
+          `Imported ${stat.importedCount} posts from ${source.name} (${
+            source.id
+          })`,
+        )
+        // Update source info
+        source.parsedPosts += POST_COUNT
       }
-
       await this.sourceRepository.save(source)
       await delay(API_DELAY)
 
