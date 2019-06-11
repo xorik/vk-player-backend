@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm'
 import { UserSource } from './user-source.entity'
 
 @Entity()
@@ -10,6 +16,7 @@ export class User {
   public name!: string
 
   @Column()
+  @Index()
   public token!: string
 
   @OneToMany((type: any) => UserSource, (s: UserSource) => s.user, {

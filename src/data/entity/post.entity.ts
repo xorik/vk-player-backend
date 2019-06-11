@@ -7,8 +7,8 @@ import {
   PrimaryColumn,
 } from 'typeorm'
 import { Audio } from './audio.entity'
+import { VkSource } from './vk-source.entity'
 import { Post as PostResponse } from '@/vk-api/service/vk-post-api.service'
-import { VkSource } from '@/data/entity/vk-source.entity'
 
 @Entity()
 export class Post {
@@ -18,8 +18,8 @@ export class Post {
   @Column({ type: 'text', charset: 'utf8mb4', collation: 'utf8mb4_unicode_ci' })
   public text!: string
 
-  // @Column()
-  // public date!: Date
+  @Column()
+  public date!: number
 
   @Column()
   public isRepost!: boolean
@@ -40,8 +40,7 @@ export class Post {
     }
 
     this.id = post.id
-    // TODO: import date
-    // this.date = post.date
+    this.date = post.date
     this.text = post.text
     this.isRepost = post.copy_history !== undefined
     this.source = source

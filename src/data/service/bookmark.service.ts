@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common'
 import { User } from '../entity/user.entity'
 import { VkSource } from '../entity/vk-source.entity'
 import { UserSource } from '../entity/user-source.entity'
+import { VkGroupApi } from '@/vk-api/service/vk-group-api.service'
 
 @Injectable()
 export class BookmarkService {
@@ -12,6 +13,7 @@ export class BookmarkService {
     private readonly vkSourceRepository: Repository<VkSource>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly groupApi: VkGroupApi,
   ) {}
 
   public async add(
@@ -22,11 +24,18 @@ export class BookmarkService {
   ): Promise<void> {
     this.assertNewSource(user, sourceId)
 
+    // TODO: move this part somewhere else, store only IDs
     let source = await this.vkSourceRepository.findOne(sourceId)
     if (source === undefined) {
-      source = new VkSource()
-      source.id = sourceId
-      source.name = name // TODO: get with API
+      if (sourceId < 0) {
+        const response = await this.groupApi.details([-sourceId])
+        source = new VkSource(response[0])
+      } else {
+        // TODO: get user
+        source = new VkSource()
+        source.name = name
+        source.id = sourceId
+      }
 
       await this.vkSourceRepository.save(source)
     }
@@ -47,6 +56,7 @@ export class BookmarkService {
     )
 
     if (index >= 0) {
+      // TODO: handle in controller
       throw new Error('Source already exists')
     }
   }
