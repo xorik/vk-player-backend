@@ -18,6 +18,9 @@ export class VkSource {
   @Column()
   public parsedPosts: number = 0
 
+  @Column()
+  public maxId: number = 0
+
   constructor(group?: GroupSearchResult) {
     if (group === undefined) {
       return

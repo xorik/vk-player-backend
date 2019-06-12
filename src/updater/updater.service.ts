@@ -8,7 +8,8 @@ import { PostImportService } from '@/updater/post-import.service'
 import { CronLogger } from '@/logger/cron-logger.service'
 
 const API_DELAY = 1000
-const POST_COUNT = 100
+const POST_COUNT_REQUESTS = 100
+const POST_COUNT_NEW = 50
 const REQUESTS_PER_CYCLE = 100
 
 @Injectable()
@@ -27,7 +28,7 @@ export class Updater {
     await this.requestRepository.save(request)
   }
 
-  public async update(): Promise<void> {
+  public async updateRequests(): Promise<void> {
     const requests = await this.requestRepository.find({
       take: REQUESTS_PER_CYCLE,
     })
@@ -43,6 +44,57 @@ export class Updater {
     }
 
     this.logger.info(`Update finished`)
+  }
+
+  public async updateNew(): Promise<void> {
+    // TODO: pagination
+    // TODO: don't update unused?
+    const sources = await this.sourceRepository.find()
+
+    for (const source of sources) {
+      let offset = 0
+      const maxId = source.maxId
+
+      while (true) {
+        const stat = await this.postImportService.import(
+          source,
+          offset,
+          POST_COUNT_NEW,
+        )
+
+        // Nothing to do
+        if (stat.importedCount === 0) {
+          break
+        }
+
+        this.logger.debug(
+          `Imported ${stat.importedCount} posts from ${source.name} (${
+            source.id
+          })`,
+        )
+
+        if (!source.isCompleted) {
+          source.parsedPosts += stat.importedCount
+        }
+
+        if (stat.maxId === undefined || stat.minId === undefined) {
+          throw new Error('This is strange')
+        }
+
+        // Update max id
+        if (stat.maxId > source.maxId) {
+          source.maxId = stat.maxId
+        }
+
+        if (stat.minId <= maxId) {
+          await this.sourceRepository.save(source)
+          break
+        }
+
+        await delay(API_DELAY)
+        offset += POST_COUNT_NEW
+      }
+    }
   }
 
   protected async updateOne(request: UpdateRequest): Promise<void> {
@@ -69,8 +121,13 @@ export class Updater {
       const stat = await this.postImportService.import(
         source,
         offset,
-        POST_COUNT,
+        POST_COUNT_REQUESTS,
       )
+
+      // Update max id
+      if (stat.maxId !== undefined && stat.maxId > source.maxId) {
+        source.maxId = stat.maxId
+      }
 
       if (stat.isCompleted) {
         source.isCompleted = true
@@ -82,12 +139,12 @@ export class Updater {
           })`,
         )
         // Update source info
-        source.parsedPosts += POST_COUNT
+        source.parsedPosts += POST_COUNT_REQUESTS
       }
       await this.sourceRepository.save(source)
       await delay(API_DELAY)
 
-      offset += POST_COUNT
+      offset += POST_COUNT_REQUESTS
     }
   }
 }
